@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prompt Enhancer — R.A.C.E. Framework</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #F4F6FB;
+      --surface:      #FFFFFF;
+      --surface-2:    #F8F9FE;
+      --border:       #E4E8F4;
+      --border-focus: #7C6FF7;
+
+      --primary:      #6C63FF;
+      --primary-2:    #7C6FF7;
+      --primary-dark: #4F46E5;
+      --primary-glow: rgba(108, 99, 255, 0.15);
+      --primary-soft: rgba(108, 99, 255, 0.08);
+
+      --ink:          #1A1D2E;
+      --ink-2:        #3D4166;
+      --ink-muted:    #7B82A8;
+      --ink-subtle:   #A8AECB;
+
+      --success:      #22C55E;
+      --error:        #EF4444;
+
+      /* RACE card accents */
+      --role-bg:  #FFF1F3; --role-clr:  #E11D7A;
+      --act-bg:   #EEF6FF; --act-clr:   #2563EB;
+      --ctx-bg:   #F0FDF6; --ctx-clr:   #16A34A;
+      --exp-bg:   #F5F0FF; --exp-clr:   #7C3AED;
+
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+
+      --shadow-xs: 0 1px 4px rgba(108,99,255,0.06);
+      --shadow-sm: 0 4px 20px rgba(108,99,255,0.08);
+      --shadow-md: 0 8px 40px rgba(108,99,255,0.12);
+      --shadow-lg: 0 20px 72px rgba(108,99,255,0.16);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ─── Animated mesh background ─── */
+    .bg-mesh {
+      position: fixed; inset: 0; z-index: 0;
+      pointer-events: none; overflow: hidden;
+    }
+    .mesh-orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(90px); animation: driftOrb 16s ease-in-out infinite alternate;
+    }
+    .orb-a { width: 600px; height: 600px; top: -180px; right: -140px;
+              background: radial-gradient(circle, rgba(108,99,255,0.14), transparent 65%); animation-delay: 0s; }
+    .orb-b { width: 420px; height: 420px; bottom: -120px; left: -100px;
+              background: radial-gradient(circle, rgba(124,111,247,0.12), transparent 65%); animation-delay: -5s; }
+    .orb-c { width: 300px; height: 300px; top: 38%; left: 38%;
+              background: radial-gradient(circle, rgba(99,179,255,0.10), transparent 65%); animation-delay: -10s; }
+    @keyframes driftOrb {
+      0%   { transform: translate(0,0) scale(1); }
+      100% { transform: translate(40px,50px) scale(1.1); }
+    }
+
+    /* grid lines overlay */
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(108,99,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(108,99,255,0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    /* ─── Layout ─── */
+    .app-wrapper {
+      position: relative; z-index: 1;
+      max-width: 880px; margin: 0 auto;
+      padding: 56px 24px 100px;
+    }
+
+    /* ─── Header ─── */
+    .header { text-align: center; margin-bottom: 56px; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 7px 18px 7px 12px;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+      color: var(--primary); margin-bottom: 28px;
+      box-shadow: var(--shadow-sm);
+    }
+    .badge-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--success);
+      animation: livePulse 2.4s ease-in-out infinite;
+    }
+    @keyframes livePulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+      50%      { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.4rem, 5.5vw, 3.6rem);
+      font-weight: 700; line-height: 1.14;
+      color: var(--ink); margin-bottom: 16px;
+      letter-spacing: -0.02em;
+    }
+    .header h1 .gradient-text {
+      background: linear-gradient(135deg, #6C63FF 0%, #A78BFA 50%, #60A5FA 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header p {
+      font-size: 1.05rem; color: var(--ink-muted);
+      font-weight: 400; line-height: 1.7; max-width: 540px; margin: 0 auto 24px;
+    }
+
+    /* RACE letter chips in header */
+    .race-chips {
+      display: inline-flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+    }
+    .race-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 5px 12px;
+      font-size: 12px; font-weight: 600; color: var(--ink-2);
+      box-shadow: var(--shadow-xs);
+    }
+    .race-chip span { font-weight: 700; font-size: 13px; }
+    .chip-r span { color: var(--role-clr); }
+    .chip-a span { color: var(--act-clr); }
+    .chip-c span { color: var(--ctx-clr); }
+    .chip-e span { color: var(--exp-clr); }
+
+    /* ─── Card base ─── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-sm);
+      padding: 32px;
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+    .card:hover { box-shadow: var(--shadow-md); }
+
+    /* ─── Section label ─── */
+    .section-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--ink-subtle);
+      margin-bottom: 14px;
+    }
+    .section-label::before {
+      content: ''; display: block; width: 3px; height: 14px;
+      background: linear-gradient(180deg, var(--primary), #A78BFA);
+      border-radius: 4px;
+    }
+
+    /* ─── Tone Selector ─── */
+    .controls-row {
+      display: flex; align-items: center; gap: 10px;
+      flex-wrap: wrap; margin-bottom: 22px;
+    }
+    .tone-pills { display: flex; gap: 7px; flex-wrap: wrap; }
+
+    .tone-pill {
+      padding: 7px 18px; border-radius: 100px;
+      border: 1.5px solid var(--border);
+      background: var(--surface-2);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px; font-weight: 500;
+      color: var(--ink-muted); cursor: pointer;
+      transition: all 0.2s cubic-bezier(.4,0,.2,1);
+      outline: none; white-space: nowrap;
+    }
+    .tone-pill:hover {
+      border-color: var(--primary-2);
+      color: var(--primary);
+      background: var(--primary-soft);
+      transform: translateY(-1px);
+    }
+    .tone-pill.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(108,99,255,0.36);
+      transform: translateY(-1px);
+    }
+
+    /* ─── Textarea ─── */
+    .input-wrap { position: relative; margin-bottom: 20px; }
+
+    textarea {
+      width: 100%; min-height: 152px; resize: vertical;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 52px 40px 20px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px; line-height: 1.7;
+      color: var(--ink); outline: none;
+      transition: border-color 0.22s, box-shadow 0.22s, background 0.22s;
+      caret-color: var(--primary);
+    }
+    textarea::placeholder { color: var(--ink-subtle); }
+    textarea:focus {
+      border-color: var(--border-focus);
+      background: var(--surface);
+      box-shadow: 0 0 0 4px var(--primary-glow);
+    }
+
+    .char-count {
+      position: absolute; bottom: 12px; right: 16px;
+      font-size: 11px; color: var(--ink-subtle);
+      font-weight: 600; pointer-events: none;
+      background: var(--surface-2); padding: 2px 6px;
+      border-radius: 6px; transition: color 0.2s;
+    }
+    .char-count.warn { color: var(--error); }
+
+    /* ─── Action Row ─── */
+    .action-row {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 14px 30px; border-radius: 100px;
+      background: linear-gradient(135deg, #6C63FF 0%, #4F46E5 100%);
+      border: none; color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 14.5px; font-weight: 600;
+      cursor: pointer; outline: none;
+      box-shadow: 0 4px 20px rgba(108,99,255,0.4);
+      transition: all 0.25s cubic-bezier(.4,0,.2,1);
+      letter-spacing: 0.01em; white-space: nowrap;
+      position: relative; overflow: hidden;
+    }
+    .btn-primary::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent);
+      border-radius: inherit;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(108,99,255,0.52);
+    }
+    .btn-primary:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(108,99,255,0.3); }
+    .btn-primary:disabled {
+      opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none;
+    }
+
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 14px 22px; border-radius: 100px;
+      background: transparent;
+      border: 1.5px solid var(--border);
+      color: var(--ink-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 13.5px; font-weight: 500; cursor: pointer;
+      outline: none; letter-spacing: 0.01em;
+      transition: all 0.2s cubic-bezier(.4,0,.2,1); white-space: nowrap;
+    }
+    .btn-ghost:hover {
+      border-color: var(--primary-2);
+      color: var(--primary);
+      background: var(--primary-soft);
+      transform: translateY(-1px);
+    }
+    .btn-ghost:active { transform: translateY(0); }
+
+    .btn-icon-sm { width: 17px; height: 17px; flex-shrink: 0; }
+
+    /* ─── Spinner ─── */
+    .spinner {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2.5px solid rgba(255,255,255,0.25);
+      border-top-color: #fff;
+      animation: spin 0.7s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── Hint ─── */
+    .hint-row {
+      display: flex; align-items: center; gap: 6px;
+      margin-top: 12px;
+      font-size: 12px; color: var(--ink-subtle); font-weight: 400;
+    }
+    .hint-row kbd {
+      display: inline-flex; align-items: center;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 5px; padding: 1px 6px;
+      font-family: 'Inter', monospace; font-size: 11px;
+      color: var(--ink-muted); font-weight: 600;
+    }
+
+    /* ─── Divider ─── */
+    .divider {
+      display: flex; align-items: center; gap: 16px;
+      margin: 36px 0; opacity: 0; transition: opacity 0.4s;
+    }
+    .divider.visible { opacity: 1; }
+    .divider-line { flex: 1; height: 1px; background: var(--border); }
+    .divider-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 100px; padding: 5px 14px;
+      font-size: 11.5px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--primary); box-shadow: var(--shadow-xs);
+    }
+    .divider-pill svg { width: 12px; height: 12px; }
+
+    /* ─── Output Section ─── */
+    .output-section {
+      opacity: 0; transform: translateY(28px);
+      transition: opacity 0.5s cubic-bezier(.4,0,.2,1), transform 0.5s cubic-bezier(.4,0,.2,1);
+    }
+    .output-section.visible { opacity: 1; transform: translateY(0); }
+
+    /* ─── Enhanced Prompt Card ─── */
+    .enhanced-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 0;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: box-shadow 0.3s;
+    }
+    .enhanced-card:hover { box-shadow: var(--shadow-md); }
+
+    .enhanced-top-bar {
+      height: 4px;
+      background: linear-gradient(90deg, #6C63FF, #A78BFA, #60A5FA, #6C63FF);
+      background-size: 300% 100%;
+      animation: barFlow 4s linear infinite;
+    }
+    @keyframes barFlow {
+      0%   { background-position: 0% 0; }
+      100% { background-position: 300% 0; }
+    }
+
+    .enhanced-body { padding: 28px 28px 24px; }
+
+    .enhanced-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px; gap: 12px;
+    }
+    .enhanced-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--primary);
+    }
+    .enhanced-label .label-icon {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: var(--primary-soft);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .enhanced-label .label-icon svg { width: 14px; height: 14px; color: var(--primary); }
+
+    .copy-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 100px;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      color: var(--ink-muted); font-family: 'Inter', sans-serif;
+      font-size: 12.5px; font-weight: 600;
+      cursor: pointer; outline: none;
+      transition: all 0.2s ease; white-space: nowrap;
+    }
+    .copy-btn svg { width: 13px; height: 13px; }
+    .copy-btn:hover {
+      background: var(--primary); border-color: var(--primary);
+      color: #fff; box-shadow: 0 4px 14px rgba(108,99,255,0.3);
+    }
+    .copy-btn.copied {
+      background: var(--success); border-color: var(--success); color: #fff;
+    }
+
+    .enhanced-text {
+      font-size: 15.5px; line-height: 1.8;
+      color: var(--ink-2); white-space: pre-wrap;
+      font-weight: 400;
+    }
+
+    /* word count */
+    .enhanced-meta {
+      display: flex; align-items: center; gap: 16px;
+      margin-top: 18px; padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .meta-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11.5px; font-weight: 500; color: var(--ink-subtle);
+    }
+    .meta-chip svg { width: 12px; height: 12px; }
+
+    /* ─── RACE Breakdown ─── */
+    .breakdown-card { margin-bottom: 20px; }
+
+    .breakdown-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 22px;
+    }
+    .breakdown-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem; font-weight: 600; color: var(--ink);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .breakdown-title em { color: var(--primary); font-style: italic; }
+    .breakdown-badge {
+      font-size: 11px; font-weight: 700;
+      background: var(--primary-soft); color: var(--primary);
+      border-radius: 6px; padding: 3px 10px;
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+
+    .race-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .race-card {
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      border: 1.5px solid transparent;
+      transition: all 0.25s cubic-bezier(.4,0,.2,1);
+      position: relative; overflow: hidden;
+      cursor: default;
+    }
+    .race-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+    .race-card::after {
+      content: attr(data-letter);
+      position: absolute; right: -4px; bottom: -20px;
+      font-family: 'Playfair Display', serif;
+      font-size: 88px; font-weight: 700;
+      opacity: 0.07; line-height: 1;
+      pointer-events: none; transition: opacity 0.25s;
+    }
+    .race-card:hover::after { opacity: 0.13; }
+
+    .race-card-header {
+      display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;
+    }
+    .race-icon {
+      width: 38px; height: 38px; border-radius: 11px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .race-icon svg { width: 18px; height: 18px; }
+
+    .race-card-meta {}
+    .race-card-title {
+      font-size: 11px; font-weight: 800; letter-spacing: 0.1em;
+      text-transform: uppercase; line-height: 1;
+    }
+    .race-card-subtitle {
+      font-size: 12px; color: var(--ink-muted);
+      margin-top: 3px; font-weight: 400;
+    }
+    .race-card-text {
+      font-size: 13.5px; line-height: 1.68;
+      color: var(--ink-2); font-weight: 400;
+    }
+
+    /* RACE themes */
+    .race-R { background: var(--role-bg); border-color: rgba(225,29,122,0.12); }
+    .race-R .race-icon { background: rgba(225,29,122,0.12); }
+    .race-R .race-icon svg { color: var(--role-clr); }
+    .race-R .race-card-title { color: var(--role-clr); }
+    .race-R::after { color: var(--role-clr); }
+
+    .race-A { background: var(--act-bg); border-color: rgba(37,99,235,0.12); }
+    .race-A .race-icon { background: rgba(37,99,235,0.12); }
+    .race-A .race-icon svg { color: var(--act-clr); }
+    .race-A .race-card-title { color: var(--act-clr); }
+    .race-A::after { color: var(--act-clr); }
+
+    .race-C { background: var(--ctx-bg); border-color: rgba(22,163,74,0.12); }
+    .race-C .race-icon { background: rgba(22,163,74,0.12); }
+    .race-C .race-icon svg { color: var(--ctx-clr); }
+    .race-C .race-card-title { color: var(--ctx-clr); }
+    .race-C::after { color: var(--ctx-clr); }
+
+    .race-E { background: var(--exp-bg); border-color: rgba(124,58,237,0.12); }
+    .race-E .race-icon { background: rgba(124,58,237,0.12); }
+    .race-E .race-icon svg { color: var(--exp-clr); }
+    .race-E .race-card-title { color: var(--exp-clr); }
+    .race-E::after { color: var(--exp-clr); }
+
+    /* ─── Refine Row ─── */
+    .refine-row {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--border);
+    }
+    .refine-label {
+      flex: 1; min-width: 160px;
+      font-size: 13px; color: var(--ink-muted); font-weight: 400;
+    }
+    .refine-label strong { color: var(--ink-2); font-weight: 600; }
+
+    /* ─── Stats Row ─── */
+    .stats-row {
+      display: flex; gap: 0; margin-bottom: 20px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); overflow: hidden;
+      box-shadow: var(--shadow-xs);
+    }
+    .stat-item {
+      flex: 1; padding: 16px 20px; text-align: center;
+      position: relative;
+    }
+    .stat-item:not(:last-child)::after {
+      content: ''; position: absolute; right: 0; top: 20%; bottom: 20%;
+      width: 1px; background: var(--border);
+    }
+    .stat-value {
+      font-size: 1.5rem; font-weight: 700; color: var(--primary);
+      font-family: 'Playfair Display', serif; line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--ink-subtle);
+    }
+
+    /* ─── Toast ─── */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--ink); color: #fff;
+      padding: 12px 22px 12px 16px; border-radius: 100px;
+      font-size: 13.5px; font-weight: 500;
+      box-shadow: 0 8px 36px rgba(0,0,0,0.22);
+      z-index: 999; white-space: nowrap;
+      transition: transform 0.35s cubic-bezier(.4,0,.2,1), opacity 0.35s;
+      opacity: 0; display: flex; align-items: center; gap: 8px;
+    }
+    .toast-icon { width: 18px; height: 18px; flex-shrink: 0; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.error { background: #DC2626; }
+    .toast.success { background: #16A34A; }
+
+    /* ─── Footer ─── */
+    .footer {
+      text-align: center; margin-top: 60px;
+      font-size: 13px; color: var(--ink-subtle); font-weight: 400;
+    }
+    .footer a {
+      color: var(--primary); text-decoration: none; font-weight: 500;
+    }
+    .footer a:hover { text-decoration: underline; }
+    .footer strong {
+      font-family: 'Playfair Display', serif;
+      font-weight: 600; color: var(--ink-2);
+    }
+    .footer-divider { margin: 0 10px; opacity: 0.4; }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 640px) {
+      .app-wrapper { padding: 36px 16px 64px; }
+      .card { padding: 22px 18px; }
+      .enhanced-body { padding: 20px 18px 18px; }
+      .race-grid { grid-template-columns: 1fr; }
+      .action-row { flex-direction: column; align-items: stretch; }
+      .btn-primary, .btn-ghost { justify-content: center; }
+      .stats-row { flex-wrap: wrap; }
+      .stat-item { min-width: 50%; }
+      .refine-row { flex-direction: column; align-items: stretch; }
+      .refine-row .btn-primary,
+      .refine-row .btn-ghost { justify-content: center; }
+      .breakdown-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg-mesh">
+  <div class="mesh-orb orb-a"></div>
+  <div class="mesh-orb orb-b"></div>
+  <div class="mesh-orb orb-c"></div>
+</div>
+<div class="bg-grid"></div>
+
+<div class="app-wrapper">
+
+  <!-- ── Header ── -->
+  <header class="header">
+    <div class="badge">
+      <span class="badge-dot"></span>
+      Anup AI · Live
+    </div>
+
+    <h1>Craft <span class="gradient-text">Extraordinary</span><br>Prompts Instantly</h1>
+
+    <p>Transform rough ideas into precision-crafted prompts using the<br>
+       <strong>R.A.C.E.</strong> framework — powered by Best AI.</p>
+
+    <div class="race-chips">
+      <div class="race-chip chip-r"><span>R</span> Role</div>
+      <div class="race-chip chip-a"><span>A</span> Action</div>
+      <div class="race-chip chip-c"><span>C</span> Context</div>
+      <div class="race-chip chip-e"><span>E</span> Expectation</div>
+    </div>
+  </header>
+
+  <!-- ── Input Card ── -->
+  <div class="card" style="margin-bottom: 20px;">
+
+    <!-- Tone Selector -->
+    <div class="section-label">Select Tone</div>
+    <div class="controls-row">
+      <div class="tone-pills">
+        <button class="tone-pill active" data-tone="Professional">Professional</button>
+        <button class="tone-pill" data-tone="Creative">Creative</button>
+        <button class="tone-pill" data-tone="Academic">Academic</button>
+        <button class="tone-pill" data-tone="Casual">Casual</button>
+        <button class="tone-pill" data-tone="Persuasive">Persuasive</button>
+      </div>
+    </div>
+
+    <!-- Textarea -->
+    <div class="section-label">Your Prompt</div>
+    <div class="input-wrap">
+      <textarea
+        id="promptInput"
+        placeholder="Describe your idea… e.g. 'Write a blog about productivity for remote workers' or 'Create a marketing email for a new SaaS product'"
+        maxlength="1200"
+      ></textarea>
+      <span class="char-count" id="charCount">0 / 1200</span>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-row">
+      <button class="btn-primary" id="enhanceBtn" onclick="enhancePrompt()">
+        <svg class="btn-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+        </svg>
+        Enhance with R.A.C.E.
+      </button>
+      <button class="btn-ghost" onclick="clearAll()">
+        <svg class="btn-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+        </svg>
+        Clear
+      </button>
+    </div>
+
+    <div class="hint-row">
+      <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
+      <span>to enhance instantly</span>
+    </div>
+  </div>
+
+  <!-- ── Divider ── -->
+  <div class="divider" id="divider">
+    <div class="divider-line"></div>
+    <div class="divider-pill">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+      </svg>
+      Enhanced Result
+    </div>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- ── Output ── -->
+  <div class="output-section" id="outputSection">
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-item">
+        <div class="stat-value" id="statWords">—</div>
+        <div class="stat-label">Words</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="statChars">—</div>
+        <div class="stat-label">Characters</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="statTone">—</div>
+        <div class="stat-label">Tone</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="statScore">—</div>
+        <div class="stat-label">Clarity Score</div>
+      </div>
+    </div>
+
+    <!-- Enhanced Prompt -->
+    <div class="enhanced-card">
+      <div class="enhanced-top-bar"></div>
+      <div class="enhanced-body">
+        <div class="enhanced-header">
+          <div class="enhanced-label">
+            <div class="label-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+              </svg>
+            </div>
+            Enhanced Prompt
+          </div>
+          <button class="copy-btn" id="copyBtn" onclick="copyPrompt()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copy Prompt
+          </button>
+        </div>
+
+        <div class="enhanced-text" id="enhancedText"></div>
+
+        <div class="enhanced-meta" id="enhancedMeta">
+          <div class="meta-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span id="metaReadTime">—</span>
+          </div>
+          <div class="meta-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <span id="metaFramework">R.A.C.E. Enhanced</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RACE Breakdown -->
+    <div class="card breakdown-card">
+      <div class="breakdown-header">
+        <div class="breakdown-title">R.A.C.E. <em>Breakdown</em></div>
+        <div class="breakdown-badge">4 Elements</div>
+      </div>
+
+      <div class="race-grid" id="raceGrid"></div>
+
+      <!-- Refine -->
+      <div class="refine-row">
+        <span class="refine-label">Not quite right? <strong>Adjust tone or refine below.</strong></span>
+        <button class="btn-ghost" onclick="refineAgain()">
+          <svg class="btn-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          Load & Refine
+        </button>
+        <button class="btn-primary" onclick="enhancePrompt(true)" style="padding:14px 24px;">
+          <svg class="btn-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+          </svg>
+          Re-Enhance
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <strong>Prompt Enhancer</strong>
+    <span class="footer-divider">·</span>
+    Built by <a href="https://ai.google.dev" target="_blank">Anup Kafle</a>
+    <span class="footer-divider">·</span>
+    R.A.C.E. Framework
+    <span class="footer-divider">·</span>
+    <a href="#">Privacy</a>
+  </footer>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <svg class="toast-icon" id="toastIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></svg>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+  /* ─────────────── CONFIG ─────────────── */
+  const API_KEY = 'AIzaSyB7HTUiWcuKCDN994D2Py8KmQ6A97rTW2w';
+  const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${API_KEY}`;
+
+  let selectedTone = 'Professional';
+
+  /* ─── Tone Pills ─── */
+  document.querySelectorAll('.tone-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.tone-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      selectedTone = pill.dataset.tone;
+    });
+  });
+
+  /* ─── Char Counter ─── */
+  const promptInput = document.getElementById('promptInput');
+  const charCount   = document.getElementById('charCount');
+  promptInput.addEventListener('input', () => {
+    const len = promptInput.value.length;
+    charCount.textContent = `${len} / 1200`;
+    charCount.classList.toggle('warn', len > 1000);
+  });
+
+  /* ─── Build Prompt ─── */
+  function buildPrompt(userPrompt, tone) {
+    return `You are an elite AI prompt engineer specializing in the R.A.C.E. framework. Enhance the user's rough prompt into a precision-crafted version with a ${tone} tone.
+
+R.A.C.E. Framework:
+- Role: The expert persona the AI should embody
+- Action: The specific, precise task to perform
+- Context: Audience, background, constraints, and details
+- Expectation: Exact output format, length, quality, and style requirements
+
+Return ONLY valid JSON (no markdown fences, no preamble):
+{
+  "enhanced": "One cohesive, polished prompt combining all RACE elements naturally",
+  "role": "Specific role/persona description",
+  "action": "Clear, precise action statement",
+  "context": "Audience, background, constraints, and relevant details",
+  "expectation": "Exact format, length, tone, and quality expectations"
+}
+
+User's rough prompt: "${userPrompt}"
+Tone: ${tone}`;
+  }
+
+  /* ─── Main Enhance ─── */
+  async function enhancePrompt(isReEnhance = false) {
+    const raw = isReEnhance
+      ? (document.getElementById('enhancedText').textContent || promptInput.value.trim())
+      : promptInput.value.trim();
+
+    if (!raw) { showToast('Please enter a prompt first.', 'error'); return; }
+
+    const btn = document.getElementById('enhanceBtn');
+    setLoading(true, btn);
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: buildPrompt(raw, selectedTone) }] }],
+          generationConfig: { temperature: 0.85, maxOutputTokens: 1400, topP: 0.95 }
+        })
+      });
+
+      if (!res.ok) {
+        const e = await res.json();
+        throw new Error(e?.error?.message || 'API error');
+      }
+
+      const data   = await res.json();
+      const text   = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const clean  = text.replace(/```json|```/gi, '').trim();
+      const parsed = JSON.parse(clean);
+
+      renderOutput(parsed);
+      showToast('Prompt enhanced successfully!', 'success');
+
+    } catch (err) {
+      console.error(err);
+      showToast(`Error: ${err.message}`, 'error');
+    } finally {
+      setLoading(false, btn);
+    }
+  }
+
+  /* ─── Render Output ─── */
+  function renderOutput(data) {
+    const enhanced = data.enhanced || '';
+
+    // Stats
+    const words = enhanced.trim().split(/\s+/).filter(Boolean).length;
+    const chars = enhanced.length;
+    const readSec = Math.ceil(words / 4);
+    const score   = Math.min(99, 70 + Math.floor(words / 3));
+
+    document.getElementById('statWords').textContent  = words;
+    document.getElementById('statChars').textContent  = chars;
+    document.getElementById('statTone').textContent   = selectedTone.slice(0,4) + '.';
+    document.getElementById('statScore').textContent  = score + '%';
+    document.getElementById('metaReadTime').textContent = readSec < 60
+      ? `~${readSec}s read`
+      : `~${Math.ceil(readSec/60)}m read`;
+
+    // Enhanced text
+    document.getElementById('enhancedText').textContent = enhanced;
+
+    // RACE Grid
+    const grid = document.getElementById('raceGrid');
+    grid.innerHTML = '';
+
+    const items = [
+      {
+        key: 'R', label: 'Role', subtitle: 'Who the AI embodies', value: data.role,
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+      },
+      {
+        key: 'A', label: 'Action', subtitle: 'The precise task', value: data.action,
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`
+      },
+      {
+        key: 'C', label: 'Context', subtitle: 'Background & constraints', value: data.context,
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+      },
+      {
+        key: 'E', label: 'Expectation', subtitle: 'Output quality & format', value: data.expectation,
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`
+      }
+    ];
+
+    items.forEach((item, i) => {
+      const card = document.createElement('div');
+      card.className = `race-card race-${item.key}`;
+      card.setAttribute('data-letter', item.key);
+      card.style.animationDelay = `${i * 80}ms`;
+      card.innerHTML = `
+        <div class="race-card-header">
+          <div class="race-icon">${item.icon}</div>
+          <div class="race-card-meta">
+            <div class="race-card-title">${item.label}</div>
+            <div class="race-card-subtitle">${item.subtitle}</div>
+          </div>
+        </div>
+        <div class="race-card-text">${escHtml(item.value || '—')}</div>
+      `;
+      grid.appendChild(card);
+    });
+
+    // Reveal
+    document.getElementById('divider').classList.add('visible');
+    const out = document.getElementById('outputSection');
+    out.classList.remove('visible');
+    void out.offsetWidth;
+    setTimeout(() => {
+      out.classList.add('visible');
+      setTimeout(() => out.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    }, 40);
+  }
+
+  /* ─── Copy ─── */
+  async function copyPrompt() {
+    const text = document.getElementById('enhancedText').textContent;
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      const btn = document.getElementById('copyBtn');
+      btn.classList.add('copied');
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Prompt`;
+      }, 2400);
+    } catch {
+      showToast('Copy failed — please copy manually.', 'error');
+    }
+  }
+
+  /* ─── Refine Again ─── */
+  function refineAgain() {
+    const t = document.getElementById('enhancedText').textContent;
+    if (t) {
+      promptInput.value = t;
+      const len = t.length;
+      charCount.textContent = `${len} / 1200`;
+      charCount.classList.toggle('warn', len > 1000);
+    }
+    promptInput.focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast('Loaded into editor — adjust & re-enhance!');
+  }
+
+  /* ─── Clear ─── */
+  function clearAll() {
+    promptInput.value = '';
+    charCount.textContent = '0 / 1200';
+    charCount.classList.remove('warn');
+    document.getElementById('divider').classList.remove('visible');
+    document.getElementById('outputSection').classList.remove('visible');
+    document.getElementById('enhancedText').textContent = '';
+    document.getElementById('raceGrid').innerHTML = '';
+    promptInput.focus();
+  }
+
+  /* ─── Loading ─── */
+  function setLoading(on, btn) {
+    if (on) {
+      btn.disabled = true;
+      btn.innerHTML = `<div class="spinner"></div> Enhancing…`;
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = `<svg class="btn-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg> Enhance with R.A.C.E.`;
+    }
+  }
+
+  /* ─── Toast ─── */
+  function showToast(msg, type = '') {
+    const t    = document.getElementById('toast');
+    const icon = document.getElementById('toastIcon');
+    const msgEl = document.getElementById('toastMsg');
+
+    msgEl.textContent = msg;
+    t.className = `toast ${type}`;
+
+    if (type === 'success') {
+      icon.innerHTML = `<polyline points="20 6 9 17 4 12"/>`;
+    } else if (type === 'error') {
+      icon.innerHTML = `<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>`;
+    } else {
+      icon.innerHTML = `<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12.01" y2="16"/><line x1="12" y1="8" x2="12" y2="13"/>`;
+    }
+
+    void t.offsetWidth;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3200);
+  }
+
+  /* ─── Escape HTML ─── */
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ─── Keyboard shortcut ─── */
+  promptInput.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') enhancePrompt();
+  });
+</script>
+</body>
+</html>
