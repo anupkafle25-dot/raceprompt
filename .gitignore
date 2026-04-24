@@ -1,0 +1,22 @@
+# ── Secrets ──────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Vercel ───────────────────────────────
+.vercel
+
+# ── Node / npm ───────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── OS junk ──────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Build outputs ────────────────────────
+dist/
+.next/
+out/
