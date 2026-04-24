@@ -1,5 +1,5 @@
 // /api/enhance.js — Vercel Serverless Function
-// Proxies Gemini API requests so the key never reaches the browser.
+// Proxies OpenRouter API requests so the key never reaches the browser.
 
 export default async function handler(req, res) {
   // Only allow POST
@@ -7,9 +7,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
-    console.error('GEMINI_API_KEY is not set in environment variables.');
+    console.error('OPENROUTER_API_KEY is not set in environment variables.');
     return res.status(500).json({ error: 'Server configuration error: API key missing.' });
   }
 
@@ -25,34 +25,40 @@ export default async function handler(req, res) {
 
   const systemPrompt = buildPrompt(prompt.trim(), tone);
 
-  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const openRouterUrl = "https://openrouter.ai/api/v1/chat/completions";
 
   try {
-    const geminiRes = await fetch(geminiUrl, {
+    const apiRes = await fetch(openRouterUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
       body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
-        generationConfig: { temperature: 0.85, maxOutputTokens: 1400, topP: 0.95 }
+        model: "google/gemini-2.5-flash", // You can change this to any OpenRouter model
+        messages: [{ role: "user", content: systemPrompt }],
+        temperature: 0.85,
+        max_tokens: 1400,
+        top_p: 0.95
       })
     });
 
-    if (!geminiRes.ok) {
-      const errData = await geminiRes.json().catch(() => ({}));
-      const message = errData?.error?.message || `Gemini API responded with status ${geminiRes.status}`;
-      console.error('Gemini API error:', message);
-      return res.status(geminiRes.status).json({ error: message });
+    if (!apiRes.ok) {
+      const errData = await apiRes.json().catch(() => ({}));
+      const message = errData?.error?.message || `OpenRouter API responded with status ${apiRes.status}`;
+      console.error('OpenRouter API error:', message);
+      return res.status(apiRes.status).json({ error: message });
     }
 
-    const data = await geminiRes.json();
-    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const data = await apiRes.json();
+    const rawText = data?.choices?.[0]?.message?.content || '';
     const clean = rawText.replace(/```json|```/gi, '').trim();
 
     let parsed;
     try {
       parsed = JSON.parse(clean);
     } catch {
-      console.error('Failed to parse Gemini JSON output:', clean);
+      console.error('Failed to parse JSON output:', clean);
       return res.status(502).json({ error: 'Received invalid JSON from AI model. Please try again.' });
     }
 
